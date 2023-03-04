@@ -14,13 +14,15 @@ def extractFeatures(img):
   pts = cv2.goodFeaturesToTrack(np.mean(img, axis=2).astype(np.uint8), 3000, qualityLevel=0.01, minDistance=7)
 
   # extraction
-  kps = [cv2.KeyPoint(x=f[0][0], y=f[0][1], _size=20) for f in pts]
+  ##kps = [cv2.KeyPoint(x=f[0][0], y=f[0][1], _size=20) for f in pts]
+  kps = [cv2.KeyPoint(x=f[0][0], y=f[0][1], size=20) for f in pts]
   kps, des = orb.compute(img, kps)
 
   # return pts and des
   return np.array([(kp.pt[0], kp.pt[1]) for kp in kps]), des
 
-def match_frames(f1, f2):
+##def match_frames(f1, f2, verbose=False):
+def match_frames(f1, f2, verbose=False):
   bf = cv2.BFMatcher(cv2.NORM_HAMMING)
   matches = bf.knnMatch(f1.des, f2.des, k=2)
 
@@ -60,7 +62,8 @@ def match_frames(f1, f2):
                           min_samples=8,
                           residual_threshold=RANSAC_RESIDUAL_THRES,
                           max_trials=RANSAC_MAX_TRIALS)
-  print("Matches:  %d -> %d -> %d -> %d" % (len(f1.des), len(matches), len(inliers), sum(inliers)))
+  ##print("Matches:  %d -> %d -> %d -> %d" % (len(f1.des), len(matches), len(inliers), sum(inliers)))
+  if verbose: print("Matches:  %d -> %d -> %d -> %d" % (len(f1.des), len(matches), len(inliers), sum(inliers)))
   return idx1[inliers], idx2[inliers], fundamentalToRt(model.params)
 
 class Frame(object):

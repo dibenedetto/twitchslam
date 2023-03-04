@@ -124,7 +124,8 @@ class Map(object):
         culled_pt_count += 1
         self.points.remove(p)
         p.delete()
-    print("Culled:   %d points" % (culled_pt_count))
+    ##print("Culled:   %d points" % (culled_pt_count))
+    if verbose: print("Culled:   %d points" % (culled_pt_count))
 
     return err
 

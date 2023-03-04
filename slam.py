@@ -25,7 +25,8 @@ class SLAM(object):
     self.W, self.H = W, H
     self.K = K
 
-  def process_frame(self, img, pose=None, verts=None):
+  ##def process_frame(self, img, pose=None, verts=None):
+  def process_frame(self, img, pose=None, verts=None, optimize_rate=None, verbose=False):
     start_time = time.time()
     assert img.shape[0:2] == (self.H, self.W)
     frame = Frame(self.mapp, img, self.K, verts=verts)
@@ -56,8 +57,9 @@ class SLAM(object):
     if pose is None:
       #print(f1.pose)
       pose_opt = self.mapp.optimize(local_window=1, fix_points=True)
-      print("Pose:     %f" % pose_opt)
-      #print(f1.pose)
+      ##print("Pose:     %f" % pose_opt)
+      ###print(f1.pose)
+      if verbose: print("Pose:     %f" % pose_opt)
     else:
       # have ground truth for pose
       f1.pose = pose
@@ -145,29 +147,42 @@ class SLAM(object):
       pt.add_observation(f1, idx1[i])
       new_pts_count += 1
 
-    print("Adding:   %d new points, %d search by projection" % (new_pts_count, sbp_pts_count))
+    ##print("Adding:   %d new points, %d search by projection" % (new_pts_count, sbp_pts_count))
+    if verbose: print("Adding:   %d new points, %d search by projection" % (new_pts_count, sbp_pts_count))
 
     # optimize the map
-    if frame.id >= 4 and frame.id%5 == 0:
+    ##if frame.id >= 4 and frame.id%5 == 0:
+    if frame.id >= 4 and optimize_rate and frame.id % optimize_rate == 0:
       err = self.mapp.optimize() #verbose=True)
-      print("Optimize: %f units of error" % err)
+      ##print("Optimize: %f units of error" % err)
+      if verbose: print("Optimize: %f units of error" % err)
 
-    print("Map:      %d points, %d frames" % (len(self.mapp.points), len(self.mapp.frames)))
-    print("Time:     %.2f ms" % ((time.time()-start_time)*1000.0))
-    print(np.linalg.inv(f1.pose))
+    ##print("Map:      %d points, %d frames" % (len(self.mapp.points), len(self.mapp.frames)))
+    ##print("Time:     %.2f ms" % ((time.time()-start_time)*1000.0))
+    ##print(np.linalg.inv(f1.pose))
+    if verbose:
+      print("Map:      %d points, %d frames" % (len(self.mapp.points), len(self.mapp.frames)))
+      print("Time:     %.2f ms" % ((time.time()-start_time)*1000.0))
+      print(np.linalg.inv(f1.pose))
+    else:
+      print("Time:     %.2f ms" % ((time.time()-start_time)*1000.0))
 
 
 if __name__ == "__main__":
-  if len(sys.argv) < 2:
-    print("%s <video.mp4>" % sys.argv[0])
-    exit(-1)
+  ##if len(sys.argv) < 2:
+    ##print("%s <video.mp4>" % sys.argv[0])
+    ##exit(-1)
+
+  verbose = False
 
   disp2d, disp3d = None, None
     
-  if os.getenv("HEADLESS") is None:
+  ##if os.getenv("HEADLESS") is None:
+  if False and os.getenv("HEADLESS") is None:
     disp3d = Display3D()
 
-  cap = cv2.VideoCapture(sys.argv[1])
+  ##cap = cv2.VideoCapture(sys.argv[1])
+  cap = cv2.VideoCapture("videos/test_freiburgdesk525.mp4")
 
   # camera parameters
   W = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
@@ -213,14 +228,18 @@ if __name__ == "__main__":
     ret, frame = cap.read()
     frame = cv2.resize(frame, (W, H))
 
-    print("\n*** frame %d/%d ***" % (i, CNT))
+    ##print("\n*** frame %d/%d ***" % (i, CNT))
+    if verbose: print("\n*** frame %d/%d ***" % (i, CNT))
     if ret == True:
-      slam.process_frame(frame, None if gt_pose is None else np.linalg.inv(gt_pose[i]))
+      ##slam.process_frame(frame, None if gt_pose is None else np.linalg.inv(gt_pose[i]))
+      pose = None if gt_pose is None else np.linalg.inv(gt_pose[i])
+      slam.process_frame(frame, pose, optimize_rate=8, verbose=verbose)
     else:
       break
 
     # 3-D display
-    if disp3d is not None:
+    ##if disp3d is not None:
+    if False and disp3d is not None:
       disp3d.paint(slam.mapp)
 
     if disp2d is not None:
